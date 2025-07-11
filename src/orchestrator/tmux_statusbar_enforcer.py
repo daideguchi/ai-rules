@@ -200,14 +200,14 @@ class TmuxStatusBarEnforcer:
                 ["tmux", "set-option", "-t", session_name, "status", "on"],
                 # ペインボーダーステータス設定
                 ["tmux", "set-option", "-t", session_name, "pane-border-status", "top"],
-                # ペインタイトル表示フォーマット（薄いグレー背景）
+                # ペインタイトル表示フォーマット（薄いグレー背景、テキスト色デフォルト）
                 [
                     "tmux",
                     "set-option",
                     "-t",
                     session_name,
                     "pane-border-format",
-                    "#{?pane_active,#[bg=colour250#,fg=black],#[bg=colour245#,fg=black]} #{pane_title} #[default]",
+                    "#{?pane_active,#[bg=colour250],#[bg=colour245]} #{pane_title} #[default]",
                 ],
                 # ステータス更新間隔
                 [
@@ -226,6 +226,9 @@ class TmuxStatusBarEnforcer:
                 # ペインタイトル自動設定許可
                 ["tmux", "set-option", "-t", session_name, "allow-rename", "on"],
                 ["tmux", "set-option", "-t", session_name, "automatic-rename", "off"],
+                # ペイン内テキスト色をデフォルトに
+                ["tmux", "set-option", "-t", session_name, "window-style", "fg=default,bg=default"],
+                ["tmux", "set-option", "-t", session_name, "window-active-style", "fg=default,bg=default"],
             ]
 
             for cmd in commands:
@@ -270,23 +273,21 @@ class TmuxStatusBarEnforcer:
                         f"✅ Set title '{pane_config.title}' for pane {pane_target}"
                     )
 
-                # ペイン専用設定（存在する場合）
-                if hasattr(pane_config, "color_scheme") and pane_config.color_scheme:
-                    # ペインボーダー色設定
-                    try:
-                        cmd_color = [
-                            "tmux",
-                            "select-pane",
-                            "-t",
-                            pane_target,
-                            "-P",
-                            f"fg={pane_config.color_scheme}",
-                        ]
-                        subprocess.run(
-                            cmd_color, capture_output=True, text=True, check=False
-                        )
-                    except Exception:
-                        pass  # カラー設定失敗は無視
+                # ペイン内容のテキスト色をデフォルトに設定
+                try:
+                    cmd_reset_color = [
+                        "tmux",
+                        "select-pane",
+                        "-t",
+                        pane_target,
+                        "-P",
+                        "fg=default,bg=default",
+                    ]
+                    subprocess.run(
+                        cmd_reset_color, capture_output=True, text=True, check=False
+                    )
+                except Exception:
+                    pass  # カラー設定失敗は無視
 
             return True
 
