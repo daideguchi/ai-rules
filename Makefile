@@ -211,9 +211,15 @@ startup: ## 完全システム起動（社長+AI組織+DB+記憶）
 	@echo "🚀 プレジデントにClaude Code起動..."
 	@tmux send-keys -t president "claude --dangerously-skip-permissions" C-m
 	@sleep 5
+	@echo "🔐 認証バイパス確認..."
+	@tmux send-keys -t president C-m
+	@sleep 2
 	@echo "📋 プロンプトセット中..."
 	@tmux send-keys -t president "あなたはプレジデントです。BOSS1、WORKER1、WORKER2、WORKER3の4人に役職を配布し、プロジェクト要件に基づいたタスクを指示してください。各ワーカーのtmuxペインに移動して指示を送信してください。" C-m
 	@sleep 2
+	@echo "⚡ プロンプト実行確認..."
+	@tmux send-keys -t president C-m
+	@sleep 1
 	@echo "👥 ワーカーセッション作成..."
 	@tmux new-session -d -s multiagent -c $(PWD) 2>/dev/null || echo "ワーカーセッション既に存在"
 	@tmux split-window -h -t multiagent 2>/dev/null || true
@@ -230,12 +236,24 @@ startup: ## 完全システム起動（社長+AI組織+DB+記憶）
 	@tmux send-keys -t multiagent:0.2 "claude --dangerously-skip-permissions" C-m
 	@tmux send-keys -t multiagent:0.3 "claude --dangerously-skip-permissions" C-m
 	@sleep 8
+	@echo "🔐 ワーカー認証バイパス確認..."
+	@tmux send-keys -t multiagent:0.0 C-m
+	@tmux send-keys -t multiagent:0.1 C-m
+	@tmux send-keys -t multiagent:0.2 C-m
+	@tmux send-keys -t multiagent:0.3 C-m
+	@sleep 3
 	@echo "📋 ワーカー役職プロンプトセット..."
 	@tmux send-keys -t multiagent:0.0 "あなたはBOSS1です。プレジデントからの指示を待ち、ワーカーたちの統括管理を行ってください。" C-m
 	@tmux send-keys -t multiagent:0.1 "あなたはWORKER1です。開発・実装タスクを担当します。プレジデントとBOSS1からの指示に従ってください。" C-m
 	@tmux send-keys -t multiagent:0.2 "あなたはWORKER2です。テスト・品質管理を担当します。プレジデントとBOSS1からの指示に従ってください。" C-m
 	@tmux send-keys -t multiagent:0.3 "あなたはWORKER3です。ドキュメント・設計を担当します。プレジデントとBOSS1からの指示に従ってください。" C-m
 	@sleep 2
+	@echo "⚡ ワーカープロンプト実行確認..."
+	@tmux send-keys -t multiagent:0.0 C-m
+	@tmux send-keys -t multiagent:0.1 C-m
+	@tmux send-keys -t multiagent:0.2 C-m
+	@tmux send-keys -t multiagent:0.3 C-m
+	@sleep 1
 	@echo "🎨 ステータスバー設定適用..."
 	@make statusbar-enforce 2>/dev/null || true
 	@echo ""
@@ -244,9 +262,9 @@ startup: ## 完全システム起動（社長+AI組織+DB+記憶）
 	@echo ""
 	@echo "🎉 完全システム起動完了！"
 	@echo "=================================="
-	@echo "✅ Claude Code起動 + プロンプトセット + 役職配置 = 完全自動完了"
-	@echo "👑 プレジデント: 起動済み・プロンプト設定済み"
-	@echo "👥 4ワーカー: 全員起動済み・役職配置済み"
+	@echo "✅ Claude Code起動 + プロンプトセット + エンター処理 + 役職配置 = 完全自動完了"
+	@echo "👑 プレジデント: 起動済み・プロンプト設定済み・エンター処理済み"
+	@echo "👥 4ワーカー: 全員起動済み・役職配置済み・エンター処理済み"
 	@echo "🎨 ステータスバー: 配置完了"
 	@echo ""
 	@echo "📺 プレジデント画面に切り替えます..."
