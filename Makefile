@@ -205,14 +205,17 @@ startup: ## 完全システム起動（社長+AI組織+DB+記憶）
 	@make memory-recall || true
 	@echo ""
 	@echo "4/5: AI組織システム起動..."
-	@make ai-org-start || true
+	@make ai-org-start || echo "⚠️ AI組織システム起動でエラーが発生しましたが、手動でClaude Code設定を続行します"
 	@echo "📋 プレジデントセッション確保..."
 	@tmux new-session -d -s president -c $(PWD) 2>/dev/null || echo "プレジデントセッション既に存在"
 	@echo "🚀 プレジデントにClaude Code起動..."
 	@echo "   Claude Codeパス確認..."
 	@which claude || echo "❌ claude command not found in PATH"
+	@echo "   Claude Code認証状態確認..."
+	@claude auth whoami 2>/dev/null && echo "✅ Claude Code認証済み" || echo "⚠️ Claude Code未認証 - 手動認証が必要です" || true
 	@tmux send-keys -t president "which claude" C-m
 	@sleep 2
+	@echo "   Claude Code起動試行（認証エラーの場合は手動で claude auth login を実行してください）"
 	@tmux send-keys -t president "claude --dangerously-skip-permissions" C-m
 	@sleep 5
 	@echo "🔐 認証バイパス確認..."
@@ -242,6 +245,8 @@ startup: ## 完全システム起動（社長+AI組織+DB+記憶）
 	@tmux select-pane -t multiagent:0.3 -T "🎨 WORKER3" 2>/dev/null || true
 	@sleep 1
 	@echo "🚀 ワーカーにClaude Code起動..."
+	@echo "   Claude Code認証状態再確認..."
+	@claude auth whoami 2>/dev/null && echo "✅ ワーカー用Claude Code認証OK" || echo "⚠️ ワーカーでもClaude Code認証が必要です" || true
 	@echo "   各ワーカーにClaude Codeパス確認..."
 	@tmux send-keys -t multiagent:0.0 "which claude || echo 'Claude not found'" C-m
 	@tmux send-keys -t multiagent:0.1 "which claude || echo 'Claude not found'" C-m
@@ -305,6 +310,10 @@ startup: ## 完全システム起動（社長+AI組織+DB+記憶）
 	@echo "🎨 ステータスバー: 配置完了"
 	@echo ""
 	@echo "📺 プレジデント画面に切り替えます..."
+	@echo "💡 Claude Code認証エラーが発生した場合の対処法:"
+	@echo "   1. tmux attach -t president"
+	@echo "   2. claude auth login"
+	@echo "   3. claude --dangerously-skip-permissions"
 	@tmux attach -t president || echo "❌ プレジデントセッションが見つかりません。手動で 'tmux attach -t president' を実行してください。"
 
 quick-start: ## 高速起動（必須システムのみ）
