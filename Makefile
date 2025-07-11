@@ -474,3 +474,8 @@ ci-setup: ## 🔧 Setup GitHub Actions for Claude CI/CD
 	@echo "  - GITHUB_TOKEN: Already available in Actions"
 	@echo ""
 	@echo "CI/CD workflow is at: .github/workflows/claude-ci.yml"
+
+tmux-reset: ## 🔄 Reset tmux to default settings (if display is unreadable)
+	@echo "🔄 Resetting tmux to default settings..."
+	@tmux kill-server 2>/dev/null || true
+	@echo "✅ tmux reset completed. Run 'make startup' to restart with default settings"
