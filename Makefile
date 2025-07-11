@@ -209,6 +209,10 @@ startup: ## 完全システム起動（社長+AI組織+DB+記憶）
 	@echo "📋 プレジデントセッション確保..."
 	@tmux new-session -d -s president -c $(PWD) 2>/dev/null || echo "プレジデントセッション既に存在"
 	@echo "🚀 プレジデントにClaude Code起動..."
+	@echo "   Claude Codeパス確認..."
+	@which claude || echo "❌ claude command not found in PATH"
+	@tmux send-keys -t president "which claude" C-m
+	@sleep 2
 	@tmux send-keys -t president "claude --dangerously-skip-permissions" C-m
 	@sleep 5
 	@echo "🔐 認証バイパス確認..."
@@ -238,6 +242,12 @@ startup: ## 完全システム起動（社長+AI組織+DB+記憶）
 	@tmux select-pane -t multiagent:0.3 -T "🎨 WORKER3" 2>/dev/null || true
 	@sleep 1
 	@echo "🚀 ワーカーにClaude Code起動..."
+	@echo "   各ワーカーにClaude Codeパス確認..."
+	@tmux send-keys -t multiagent:0.0 "which claude || echo 'Claude not found'" C-m
+	@tmux send-keys -t multiagent:0.1 "which claude || echo 'Claude not found'" C-m
+	@tmux send-keys -t multiagent:0.2 "which claude || echo 'Claude not found'" C-m
+	@tmux send-keys -t multiagent:0.3 "which claude || echo 'Claude not found'" C-m
+	@sleep 3
 	@echo "   BOSS1起動中..."
 	@tmux send-keys -t multiagent:0.0 "claude --dangerously-skip-permissions" C-m
 	@sleep 3
