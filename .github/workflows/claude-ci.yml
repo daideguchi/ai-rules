@@ -1,0 +1,123 @@
+name: Claude Code CI/CD
+on:
+  pull_request:
+    types: [opened, synchronize]
+  push:
+    branches: [main]
+
+jobs:
+  claude-type-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install mypy ruff pytest
+          pip install -r requirements.txt
+      
+      - name: Run mypy and collect errors
+        id: mypy
+        continue-on-error: true
+        run: |
+          mypy src/ --no-implicit-optional --ignore-missing-imports > mypy_errors.log 2>&1 || true
+          echo "MYPY_FAILED=$?" >> $GITHUB_OUTPUT
+      
+      - name: Claude fixes type errors
+        if: steps.mypy.outputs.MYPY_FAILED != '0'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          npm install -g @anthropic-ai/claude-code
+          
+          # XMLタグ構造化プロンプト
+          cat > fix_prompt.xml << 'EOF'
+          <instructions>
+          あなたはPython型チェックの専門家です。以下のmypyエラーを修正してください。
+          </instructions>
+          
+          <context>
+          - Python 3.11環境
+          - mypyの--no-implicit-optionalフラグが有効
+          - 型アノテーションを正確に修正
+          </context>
+          
+          <errors>
+          $(cat mypy_errors.log)
+          </errors>
+          
+          <requirements>
+          - Optional[T]を明示的に使用
+          - from typing importを適切に追加
+          - 既存のロジックは変更しない
+          </requirements>
+          EOF
+          
+          claude -p "$(cat fix_prompt.xml)" --dangerously-skip-permissions
+      
+      - name: Run tests
+        run: |
+          pytest tests/ -v
+      
+      - name: Commit fixes
+        if: steps.mypy.outputs.MYPY_FAILED != '0'
+        run: |
+          git config --local user.email "claude-ci@example.com"
+          git config --local user.name "Claude CI"
+          git add -A
+          git diff --staged --quiet || git commit -m "🤖 fix: Auto-fix type errors by Claude CI"
+          git push
+
+  claude-code-review:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Get changed files
+        id: changed-files
+        run: |
+          echo "files=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -E '\.(py|js|ts)$' | tr '\n' ' ')" >> $GITHUB_OUTPUT
+      
+      - name: Claude reviews code
+        if: steps.changed-files.outputs.files != ''
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          npm install -g @anthropic-ai/claude-code
+          
+          # レビュー用XMLプロンプト
+          cat > review_prompt.xml << 'EOF'
+          <instructions>
+          以下のファイルをコードレビューしてください。
+          </instructions>
+          
+          <context>
+          - セキュリティ問題を最優先で検出
+          - パフォーマンス問題を指摘
+          - ベストプラクティスに従っているか確認
+          </context>
+          
+          <files>
+          ${{ steps.changed-files.outputs.files }}
+          </files>
+          
+          <output_format>
+          各問題を以下の形式で報告:
+          - 🔴 Critical: セキュリティ/重大バグ
+          - 🟡 Warning: パフォーマンス/潜在的問題
+          - 🟢 Suggestion: 改善提案
+          </output_format>
+          EOF
+          
+          claude -p "$(cat review_prompt.xml)" > review_result.md
+          
+          # GitHubコメントとして投稿
+          gh pr comment ${{ github.event.pull_request.number }} --body-file review_result.md

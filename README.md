@@ -27,11 +27,32 @@ tmux attach -t president  # プレジデント画面
 tmux attach -t ai-org     # ワーカー4画面
 ```
 
-## 📋 その他機能（オプション）
+## 🔧 高度な機能（オプション）
 
-- **ファイル整理**: `make check-file-organization`
-- **MCP設定**: `make mcp-setup`（後で設定可能）
-- **API設定**: `make api-setup`（後で設定可能）
+### 🤖 CI/CD統合
+```bash
+# .github/workflows/claude-ci.yml が自動で以下を実行:
+- 型エラー自動修正（mypy）
+- コードレビュー（PR時）
+- テスト自動実行
+```
+
+### 📝 XMLタグ構造化
+`templates/CLAUDE_TEMPLATE.md` でプロンプトを構造化:
+- `<instructions>`: 明確な指示
+- `<context>`: 背景情報
+- `<requirements>`: 要件定義
+
+### 🌐 MCPサーバー活用
+`config/mcp-servers.json` で外部ツール統合:
+- GitHub連携
+- データベース接続
+- 最新ドキュメント取得
+
+### 💰 トークン管理
+```bash
+python scripts/monitoring/token_monitor.py --summary  # 使用量確認
+```
 
 ---
 

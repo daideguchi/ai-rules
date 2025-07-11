@@ -453,3 +453,24 @@ root-audit: ## 🔍 Audit root directory file count
 	@echo "Files in root: $$(ls -la | grep "^-" | wc -l | tr -d ' ')/12 maximum"
 	@echo "Folders: $$(ls -d */ 2>/dev/null | wc -l)"
 	@if [ $$(ls -la | grep "^-" | wc -l | tr -d ' ') -gt 12 ]; then echo "❌ OVER LIMIT - Run 'make enforce-file-organization'"; exit 1; else echo "✅ COMPLIANT"; fi
+
+## 🤖 Claude Code Integration Commands
+token-summary: ## 💰 Check token usage and costs
+	@echo "💰 Token Usage Summary"
+	@python3 scripts/monitoring/token_monitor.py --summary
+
+mcp-servers: ## 🌐 List available MCP servers
+	@echo "🌐 Available MCP Servers:"
+	@cat config/mcp-servers.json | python3 -m json.tool | grep -E '"(github|puppeteer|context7|o3|database)"' || echo "No MCP servers configured"
+
+claude-template: ## 📝 Show Claude XML template structure
+	@echo "📝 Claude XML Template Structure:"
+	@head -30 templates/CLAUDE_TEMPLATE.md
+
+ci-setup: ## 🔧 Setup GitHub Actions for Claude CI/CD
+	@echo "🔧 Setting up Claude CI/CD..."
+	@echo "Add these secrets to your GitHub repository:"
+	@echo "  - ANTHROPIC_API_KEY: Your Claude API key"
+	@echo "  - GITHUB_TOKEN: Already available in Actions"
+	@echo ""
+	@echo "CI/CD workflow is at: .github/workflows/claude-ci.yml"

@@ -1,0 +1,45 @@
+{
+  "mcpServers": {
+    "github": {
+      "command": "npx",
+      "args": ["github-mcp-server"],
+      "env": {
+        "GITHUB_TOKEN": "${GITHUB_TOKEN}"
+      }
+    },
+    "puppeteer": {
+      "command": "npx",
+      "args": ["puppeteer-mcp"],
+      "env": {
+        "HEADLESS": "true"
+      }
+    },
+    "context7": {
+      "command": "npx",
+      "args": ["context7-mcp"],
+      "description": "最新技術ドキュメント自動取得"
+    },
+    "o3": {
+      "command": "npx",
+      "args": ["o3-search-mcp"],
+      "env": {
+        "OPENAI_API_KEY": "${OPENAI_API_KEY}",
+        "SEARCH_CONTEXT_SIZE": "medium",
+        "REASONING_EFFORT": "medium"
+      }
+    },
+    "database": {
+      "command": "npx",
+      "args": ["postgres-mcp"],
+      "env": {
+        "DATABASE_URL": "${DATABASE_URL}"
+      }
+    }
+  },
+  "tokenManagement": {
+    "maxTokensPerRequest": 8000,
+    "warningThreshold": 6000,
+    "autoCompactAt": 7000,
+    "preserveImportantContext": true
+  }
+}
