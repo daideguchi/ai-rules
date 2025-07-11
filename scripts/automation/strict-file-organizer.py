@@ -33,17 +33,32 @@ class StrictFileOrganizer:
         if self._is_original_coding_rule2():
             return 'ai-project'
         
+        # CLAUDE.mdがあればAIプロジェクト（優先度高）
+        if (self.project_root / 'CLAUDE.md').exists():
+            return 'ai-project'
+        
+        # Makefileがあり、AI関連のターゲットが含まれていればAIプロジェクト
+        makefile = self.project_root / 'Makefile'
+        if makefile.exists():
+            try:
+                with open(makefile, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                    if 'ai-org-start' in content or 'declare-president' in content:
+                        return 'ai-project'
+            except:
+                pass
+        
         # package.jsonがあればwebプロジェクト
         if (self.project_root / 'package.json').exists():
             return 'web'
         
-        # setup.pyやpyproject.tomlがあればpythonプロジェクト
-        if (self.project_root / 'setup.py').exists() or (self.project_root / 'pyproject.toml').exists():
+        # setup.pyがあり、CLAUDE.mdがなければpythonプロジェクト
+        if (self.project_root / 'setup.py').exists():
             return 'python'
         
-        # CLAUDE.mdがあればAIプロジェクト
-        if (self.project_root / 'CLAUDE.md').exists():
-            return 'ai-project'
+        # pyproject.tomlがあり、webやAI関連でなければpythonプロジェクト
+        if (self.project_root / 'pyproject.toml').exists() and not (self.project_root / 'CLAUDE.md').exists():
+            return 'python'
         
         # デフォルトはカスタム
         return 'custom'
@@ -59,18 +74,7 @@ class StrictFileOrganizer:
             if not (self.project_root / indicator).exists():
                 return False
                 
-        # READMEの内容もチェック
-        readme = self.project_root / 'README.md'
-        if readme.exists():
-            try:
-                with open(readme, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                    if 'coding-rule2' in content and 'テンプレート' in content:
-                        return True
-            except:
-                pass
-                
-        return False
+        return True
     
     def _load_project_configuration(self):
         """プロジェクトタイプ別設定を読み込み"""
