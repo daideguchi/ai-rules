@@ -200,14 +200,14 @@ class TmuxStatusBarEnforcer:
                 ["tmux", "set-option", "-t", session_name, "status", "on"],
                 # ペインボーダーステータス設定
                 ["tmux", "set-option", "-t", session_name, "pane-border-status", "top"],
-                # ペインタイトル表示フォーマット（薄いグレー背景、テキスト色デフォルト）
+                # ペインタイトル表示フォーマット（完全デフォルト）
                 [
                     "tmux",
                     "set-option",
                     "-t",
                     session_name,
                     "pane-border-format",
-                    "#{?pane_active,#[bg=colour250],#[bg=colour245]} #{pane_title} #[default]",
+                    " #{pane_title} ",
                 ],
                 # ステータス更新間隔
                 [
@@ -226,9 +226,6 @@ class TmuxStatusBarEnforcer:
                 # ペインタイトル自動設定許可
                 ["tmux", "set-option", "-t", session_name, "allow-rename", "on"],
                 ["tmux", "set-option", "-t", session_name, "automatic-rename", "off"],
-                # ペイン内テキスト色をデフォルトに
-                ["tmux", "set-option", "-t", session_name, "window-style", "fg=default,bg=default"],
-                ["tmux", "set-option", "-t", session_name, "window-active-style", "fg=default,bg=default"],
             ]
 
             for cmd in commands:
@@ -273,21 +270,7 @@ class TmuxStatusBarEnforcer:
                         f"✅ Set title '{pane_config.title}' for pane {pane_target}"
                     )
 
-                # ペイン内容のテキスト色をデフォルトに設定
-                try:
-                    cmd_reset_color = [
-                        "tmux",
-                        "select-pane",
-                        "-t",
-                        pane_target,
-                        "-P",
-                        "fg=default,bg=default",
-                    ]
-                    subprocess.run(
-                        cmd_reset_color, capture_output=True, text=True, check=False
-                    )
-                except Exception:
-                    pass  # カラー設定失敗は無視
+                # 色設定は一切行わない（完全デフォルト）
 
             return True
 
@@ -335,23 +318,9 @@ class TmuxStatusBarEnforcer:
             return False
 
     def _apply_color_scheme(self, session_name: str, config: StatusBarConfig) -> bool:
-        """カラースキーム適用（薄いグレーのペインボーダーのみ設定）"""
+        """カラースキーム適用（完全デフォルト）"""
         try:
-            # ペインボーダーのみ薄いグレーに設定、他はデフォルト
-            commands = [
-                [
-                    "tmux",
-                    "set-option",
-                    "-t",
-                    session_name,
-                    "pane-border-style",
-                    "fg=colour245",
-                ],
-            ]
-
-            for cmd in commands:
-                subprocess.run(cmd, capture_output=True, text=True, check=False)
-
+            # 全て完全デフォルトに設定（何も色設定しない）
             return True
 
         except Exception as e:
