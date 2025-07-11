@@ -200,14 +200,14 @@ class TmuxStatusBarEnforcer:
                 ["tmux", "set-option", "-t", session_name, "status", "on"],
                 # ペインボーダーステータス設定
                 ["tmux", "set-option", "-t", session_name, "pane-border-status", "top"],
-                # ペインタイトル表示フォーマット（完全デフォルト）
+                # ペインタイトル表示フォーマット（薄いグレー背景）
                 [
                     "tmux",
                     "set-option",
                     "-t",
                     session_name,
                     "pane-border-format",
-                    " #{pane_title} ",
+                    "#{?pane_active,#[bg=colour250#,fg=black],#[bg=colour245#,fg=black]} #{pane_title} #[default]",
                 ],
                 # ステータス更新間隔
                 [

@@ -221,39 +221,66 @@ startup: ## 完全システム起動（社長+AI組織+DB+記憶）
 	@tmux send-keys -t president C-m
 	@sleep 1
 	@echo "👥 ワーカーセッション作成..."
-	@tmux new-session -d -s multiagent -c $(PWD) 2>/dev/null || echo "ワーカーセッション既に存在"
-	@tmux split-window -h -t multiagent 2>/dev/null || true
-	@tmux split-window -v -t multiagent:0.0 2>/dev/null || true  
-	@tmux split-window -v -t multiagent:0.1 2>/dev/null || true
+	@tmux kill-session -t multiagent 2>/dev/null || true
+	@tmux new-session -d -s multiagent -c $(PWD)
+	@sleep 1
+	@tmux split-window -h -t multiagent
+	@sleep 1
+	@tmux split-window -v -t multiagent:0.0
+	@sleep 1  
+	@tmux split-window -v -t multiagent:0.2
+	@sleep 1
+	@tmux select-layout -t multiagent tiled
 	@echo "🎭 ワーカー役職配置中..."
 	@tmux select-pane -t multiagent:0.0 -T "👔 BOSS1" 2>/dev/null || true
 	@tmux select-pane -t multiagent:0.1 -T "💻 WORKER1" 2>/dev/null || true
 	@tmux select-pane -t multiagent:0.2 -T "🔧 WORKER2" 2>/dev/null || true
 	@tmux select-pane -t multiagent:0.3 -T "🎨 WORKER3" 2>/dev/null || true
+	@sleep 1
 	@echo "🚀 ワーカーにClaude Code起動..."
+	@echo "   BOSS1起動中..."
 	@tmux send-keys -t multiagent:0.0 "claude --dangerously-skip-permissions" C-m
+	@sleep 3
+	@echo "   WORKER1起動中..."
 	@tmux send-keys -t multiagent:0.1 "claude --dangerously-skip-permissions" C-m
+	@sleep 3
+	@echo "   WORKER2起動中..."
 	@tmux send-keys -t multiagent:0.2 "claude --dangerously-skip-permissions" C-m
+	@sleep 3
+	@echo "   WORKER3起動中..."
 	@tmux send-keys -t multiagent:0.3 "claude --dangerously-skip-permissions" C-m
-	@sleep 8
+	@sleep 5
 	@echo "🔐 ワーカー認証バイパス確認..."
 	@tmux send-keys -t multiagent:0.0 C-m
+	@sleep 1
 	@tmux send-keys -t multiagent:0.1 C-m
+	@sleep 1
 	@tmux send-keys -t multiagent:0.2 C-m
+	@sleep 1
 	@tmux send-keys -t multiagent:0.3 C-m
 	@sleep 3
 	@echo "📋 ワーカー役職プロンプトセット..."
+	@echo "   BOSS1プロンプト設定..."
 	@tmux send-keys -t multiagent:0.0 "あなたはBOSS1です。プレジデントからの指示を待ち、ワーカーたちの統括管理を行ってください。" C-m
-	@tmux send-keys -t multiagent:0.1 "あなたはWORKER1です。開発・実装タスクを担当します。プレジデントとBOSS1からの指示に従ってください。" C-m
-	@tmux send-keys -t multiagent:0.2 "あなたはWORKER2です。テスト・品質管理を担当します。プレジデントとBOSS1からの指示に従ってください。" C-m
-	@tmux send-keys -t multiagent:0.3 "あなたはWORKER3です。ドキュメント・設計を担当します。プレジデントとBOSS1からの指示に従ってください。" C-m
 	@sleep 2
+	@echo "   WORKER1プロンプト設定..."
+	@tmux send-keys -t multiagent:0.1 "あなたはWORKER1です。開発・実装タスクを担当します。プレジデントとBOSS1からの指示に従ってください。" C-m
+	@sleep 2
+	@echo "   WORKER2プロンプト設定..."
+	@tmux send-keys -t multiagent:0.2 "あなたはWORKER2です。テスト・品質管理を担当します。プレジデントとBOSS1からの指示に従ってください。" C-m
+	@sleep 2
+	@echo "   WORKER3プロンプト設定..."
+	@tmux send-keys -t multiagent:0.3 "あなたはWORKER3です。ドキュメント・設計を担当します。プレジデントとBOSS1からの指示に従ってください。" C-m
+	@sleep 3
 	@echo "⚡ ワーカープロンプト実行確認..."
 	@tmux send-keys -t multiagent:0.0 C-m
-	@tmux send-keys -t multiagent:0.1 C-m
-	@tmux send-keys -t multiagent:0.2 C-m
-	@tmux send-keys -t multiagent:0.3 C-m
 	@sleep 1
+	@tmux send-keys -t multiagent:0.1 C-m
+	@sleep 1
+	@tmux send-keys -t multiagent:0.2 C-m
+	@sleep 1
+	@tmux send-keys -t multiagent:0.3 C-m
+	@sleep 2
 	@echo "🎨 ステータスバー設定適用..."
 	@make statusbar-enforce 2>/dev/null || true
 	@echo ""
