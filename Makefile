@@ -215,9 +215,9 @@ startup: ## 完全システム起動（社長+AI組織+DB+記憶）
 	@claude auth whoami 2>/dev/null && echo "✅ Claude Code認証済み" || echo "⚠️ Claude Code未認証 - 手動認証が必要です" || true
 	@tmux send-keys -t president "which claude" C-m
 	@sleep 2
-	@echo "   Claude Code起動試行（認証エラーの場合は手動で claude auth login を実行してください）"
+	@echo "   Claude Code起動中（認証が必要な場合は自動でブラウザが起動します）"
 	@tmux send-keys -t president "claude --dangerously-skip-permissions" C-m
-	@sleep 5
+	@sleep 8
 	@echo "🔐 認証バイパス確認..."
 	@tmux send-keys -t president C-m
 	@sleep 2
@@ -310,10 +310,8 @@ startup: ## 完全システム起動（社長+AI組織+DB+記憶）
 	@echo "🎨 ステータスバー: 配置完了"
 	@echo ""
 	@echo "📺 プレジデント画面に切り替えます..."
-	@echo "💡 Claude Code認証エラーが発生した場合の対処法:"
-	@echo "   1. tmux attach -t president"
-	@echo "   2. claude auth login"
-	@echo "   3. claude --dangerously-skip-permissions"
+	@echo "💡 Claude Code認証が必要な場合は自動でブラウザが起動します"
+	@echo "   認証完了後、プレジデントがワーカーに指示を開始します"
 	@tmux attach -t president || echo "❌ プレジデントセッションが見つかりません。手動で 'tmux attach -t president' を実行してください。"
 
 quick-start: ## 高速起動（必須システムのみ）

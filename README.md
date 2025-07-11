@@ -32,22 +32,13 @@ tmux attach -t multiagent   # ワーカー4画面
 ```
 
 ### 🔴 重要：Claude Code認証
-**初回起動前にClaude Code認証が必要です**
-```bash
-claude auth login  # 初回のみ実行
-```
+**初回起動時は自動でブラウザが起動して認証を行います**
+- `make startup`実行時、認証が必要な場合は自動でブラウザが開きます
+- ブラウザで認証完了後、AI組織が自動起動します
 
 ### 🔴 重要：プレジデント→ワーカー指示時の操作
 **指示を入力した後、必ずエンターキーを押してください**  
 エンターを押さないとワーカーに指示が届きません
-
-### 💡 トラブルシューティング
-Claude Code起動で"no current client"エラーが出た場合：
-```bash
-tmux attach -t president
-claude auth login
-claude --dangerously-skip-permissions
-```
 
 ## 🔧 高度な機能（オプション）
 
