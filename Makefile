@@ -208,12 +208,47 @@ startup: ## 完全システム起動（社長+AI組織+DB+記憶）
 	@make ai-org-start || true
 	@echo "📋 プレジデントセッション確保..."
 	@tmux new-session -d -s president -c $(PWD) 2>/dev/null || echo "プレジデントセッション既に存在"
+	@echo "🚀 プレジデントにClaude Code起動..."
+	@tmux send-keys -t president "claude --dangerously-skip-permissions" C-m
+	@sleep 5
+	@echo "📋 プロンプトセット中..."
+	@tmux send-keys -t president "あなたはプレジデントです。BOSS1、WORKER1、WORKER2、WORKER3の4人に役職を配布し、プロジェクト要件に基づいたタスクを指示してください。各ワーカーのtmuxペインに移動して指示を送信してください。" C-m
+	@sleep 2
+	@echo "👥 ワーカーセッション作成..."
+	@tmux new-session -d -s multiagent -c $(PWD) 2>/dev/null || echo "ワーカーセッション既に存在"
+	@tmux split-window -h -t multiagent 2>/dev/null || true
+	@tmux split-window -v -t multiagent:0.0 2>/dev/null || true  
+	@tmux split-window -v -t multiagent:0.1 2>/dev/null || true
+	@echo "🎭 ワーカー役職配置中..."
+	@tmux select-pane -t multiagent:0.0 -T "👔 BOSS1" 2>/dev/null || true
+	@tmux select-pane -t multiagent:0.1 -T "💻 WORKER1" 2>/dev/null || true
+	@tmux select-pane -t multiagent:0.2 -T "🔧 WORKER2" 2>/dev/null || true
+	@tmux select-pane -t multiagent:0.3 -T "🎨 WORKER3" 2>/dev/null || true
+	@echo "🚀 ワーカーにClaude Code起動..."
+	@tmux send-keys -t multiagent:0.0 "claude --dangerously-skip-permissions" C-m
+	@tmux send-keys -t multiagent:0.1 "claude --dangerously-skip-permissions" C-m
+	@tmux send-keys -t multiagent:0.2 "claude --dangerously-skip-permissions" C-m
+	@tmux send-keys -t multiagent:0.3 "claude --dangerously-skip-permissions" C-m
+	@sleep 8
+	@echo "📋 ワーカー役職プロンプトセット..."
+	@tmux send-keys -t multiagent:0.0 "あなたはBOSS1です。プレジデントからの指示を待ち、ワーカーたちの統括管理を行ってください。" C-m
+	@tmux send-keys -t multiagent:0.1 "あなたはWORKER1です。開発・実装タスクを担当します。プレジデントとBOSS1からの指示に従ってください。" C-m
+	@tmux send-keys -t multiagent:0.2 "あなたはWORKER2です。テスト・品質管理を担当します。プレジデントとBOSS1からの指示に従ってください。" C-m
+	@tmux send-keys -t multiagent:0.3 "あなたはWORKER3です。ドキュメント・設計を担当します。プレジデントとBOSS1からの指示に従ってください。" C-m
+	@sleep 2
+	@echo "🎨 ステータスバー設定適用..."
+	@make statusbar-enforce 2>/dev/null || true
 	@echo ""
 	@echo "5/5: システム統合テスト..."
 	@make integration-test || true
 	@echo ""
 	@echo "🎉 完全システム起動完了！"
 	@echo "=================================="
+	@echo "✅ Claude Code起動 + プロンプトセット + 役職配置 = 完全自動完了"
+	@echo "👑 プレジデント: 起動済み・プロンプト設定済み"
+	@echo "👥 4ワーカー: 全員起動済み・役職配置済み"
+	@echo "🎨 ステータスバー: 配置完了"
+	@echo ""
 	@echo "📺 プレジデント画面に切り替えます..."
 	@tmux attach -t president || echo "❌ プレジデントセッションが見つかりません。手動で 'tmux attach -t president' を実行してください。"
 
