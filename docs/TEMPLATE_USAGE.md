@@ -1,13 +1,16 @@
-# coding-rule2 Template Usage Guide
-# テンプレート使用ガイド
+# coding-rule2 テンプレート使用ガイド
+# テンプレート使用完全マニュアル
 
-## 🎯 Overview
+## 🎯 概要
 
-`coding-rule2` is a comprehensive project template featuring:
-- 🔒 **Strict file organization** with automatic enforcement
-- 🤖 **AI/ML project optimizations** (Claude, MCP integration)
-- 📋 **Multiple project type support** (Web, Python, AI, Custom)
-- ⚡ **One-command setup** for new projects
+`coding-rule2` は、自動ファイル整理、AI統合、複数プロジェクトタイプ対応を備えた万能プロジェクトテンプレートです。
+
+### 🌟 主要機能：
+- **📁 厳格なファイル整理**: 12-20ファイルのルート制限による自動強制
+- **🚀 ワンコマンドセットアップ**: インタラクティブなプロジェクト初期化
+- **🎯 4つのプロジェクトタイプ**: Web、Python、AI/ML、カスタム
+- **🤖 AI統合**: Claude Code、MCP、o3サポート内蔵
+- **⚡ 自動保護**: プリコミットフックによる自動強制
 
 ## 🚀 Quick Start for New Projects
 
