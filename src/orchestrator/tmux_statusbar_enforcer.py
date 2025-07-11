@@ -200,14 +200,14 @@ class TmuxStatusBarEnforcer:
                 ["tmux", "set-option", "-t", session_name, "status", "on"],
                 # ペインボーダーステータス設定
                 ["tmux", "set-option", "-t", session_name, "pane-border-status", "top"],
-                # ペインタイトル表示フォーマット（シンプル・見やすく）
+                # ペインタイトル表示フォーマット（薄いグレー背景）
                 [
                     "tmux",
                     "set-option",
                     "-t",
                     session_name,
                     "pane-border-format",
-                    "#{?pane_active,#[reverse],} #{pane_title} #[default]",
+                    "#{?pane_active,#[bg=colour250#,fg=black],#[bg=colour245#,fg=black]} #{pane_title} #[default]",
                 ],
                 # ステータス更新間隔
                 [
@@ -297,9 +297,9 @@ class TmuxStatusBarEnforcer:
     def _apply_status_line_format(
         self, session_name: str, config: StatusBarConfig
     ) -> bool:
-        """ステータスライン形式設定（シンプル）"""
+        """ステータスライン形式設定（デフォルト）"""
         try:
-            # シンプルなステータスライン
+            # デフォルトのステータスライン設定（最小限）
             status_left = f" {config.session_name.upper()} "
 
             if config.show_session_info:
@@ -319,14 +319,7 @@ class TmuxStatusBarEnforcer:
                     "status-right",
                     status_right,
                 ],
-                [
-                    "tmux",
-                    "set-option",
-                    "-t",
-                    session_name,
-                    "status-style",
-                    "bg=black,fg=white",
-                ],
+                # ステータススタイルはデフォルトに戻す（設定しない）
             ]
 
             for cmd in commands:
@@ -341,41 +334,17 @@ class TmuxStatusBarEnforcer:
             return False
 
     def _apply_color_scheme(self, session_name: str, config: StatusBarConfig) -> bool:
-        """カラースキーム適用（シンプル設定）"""
+        """カラースキーム適用（薄いグレーのペインボーダーのみ設定）"""
         try:
-            # シンプルなデフォルト色設定
+            # ペインボーダーのみ薄いグレーに設定、他はデフォルト
             commands = [
                 [
                     "tmux",
                     "set-option",
                     "-t",
                     session_name,
-                    "pane-active-border-style",
-                    "fg=green",
-                ],
-                [
-                    "tmux",
-                    "set-option",
-                    "-t",
-                    session_name,
                     "pane-border-style",
-                    "fg=white",
-                ],
-                [
-                    "tmux",
-                    "set-option",
-                    "-t",
-                    session_name,
-                    "window-status-current-style",
-                    "bg=green,fg=black,bold",
-                ],
-                [
-                    "tmux",
-                    "set-option",
-                    "-t",
-                    session_name,
-                    "window-status-style",
-                    "bg=black,fg=white",
+                    "fg=colour245",
                 ],
             ]
 
