@@ -20,13 +20,11 @@ make startup
 
 ---
 
-## 🤖 利用可能なAI組織コマンド
+## 📺 AI組織画面確認
 
 ```bash
-make startup           # AI組織システム完全起動
-make ai-org-start      # AI組織ダッシュボード起動
-make declare-president # PRESIDENT宣言
-make ai-org-status     # AI組織状況確認
+tmux attach -t president  # プレジデント画面
+tmux attach -t ai-org     # ワーカー4画面
 ```
 
 ## 📋 その他機能（オプション）
