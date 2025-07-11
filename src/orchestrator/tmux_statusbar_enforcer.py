@@ -200,14 +200,14 @@ class TmuxStatusBarEnforcer:
                 ["tmux", "set-option", "-t", session_name, "status", "on"],
                 # ペインボーダーステータス設定
                 ["tmux", "set-option", "-t", session_name, "pane-border-status", "top"],
-                # ペインタイトル表示フォーマット（白色テキスト）
+                # ペインタイトル表示フォーマット（見やすい背景色）
                 [
                     "tmux",
                     "set-option",
                     "-t",
                     session_name,
                     "pane-border-format",
-                    "#{?pane_active,#[bg=colour46#,fg=white],#[bg=colour240#,fg=white]} #{pane_title} #[default]",
+                    "#{?pane_active,#[bg=colour46#,fg=black],#[bg=colour235#,fg=colour255]} #{pane_title} #[default]",
                 ],
                 # ステータス更新間隔
                 [
@@ -360,7 +360,7 @@ class TmuxStatusBarEnforcer:
                         "-t",
                         session_name,
                         "pane-border-style",
-                        "fg=colour240",
+                        "fg=colour235",
                     ],
                     [
                         "tmux",
@@ -376,7 +376,7 @@ class TmuxStatusBarEnforcer:
                         "-t",
                         session_name,
                         "window-status-style",
-                        "bg=colour240,fg=colour255",
+                        "bg=colour235,fg=colour255",
                     ],
                 ]
             elif config.color_theme == "executive":
@@ -396,7 +396,7 @@ class TmuxStatusBarEnforcer:
                         "-t",
                         session_name,
                         "pane-border-style",
-                        "fg=colour240",
+                        "fg=colour235",
                     ],
                     [
                         "tmux",
@@ -412,7 +412,7 @@ class TmuxStatusBarEnforcer:
                         "-t",
                         session_name,
                         "window-status-style",
-                        "bg=colour240,fg=colour255",
+                        "bg=colour235,fg=colour255",
                     ],
                 ]
             else:
