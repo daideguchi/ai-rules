@@ -495,7 +495,7 @@ except Exception as e:
                 statusbar_result = subprocess.run(
                     [
                         venv_python,
-                        "src/orchestrator/tmux_statusbar_enforcer.py", 
+                        "src/orchestrator/tmux_statusbar_enforcer.py",
                         "apply-all"
                     ],
                     capture_output=True,
@@ -718,7 +718,7 @@ except Exception as e:
             print("   🧹 Cleaning up existing tmux sessions...")
             subprocess.run(["tmux", "kill-server"], check=False)
             time.sleep(2)
-            
+
             # Create president session
             print("   👑 Creating president session...")
             result = subprocess.run(
@@ -765,7 +765,7 @@ except Exception as e:
             subprocess.run(
                 ["tmux", "select-layout", "-t", "multiagent", "tiled"], check=True
             )
-            
+
             # Verify sessions were created
             print("   ✅ Verifying tmux sessions...")
             result = subprocess.run(
@@ -775,7 +775,7 @@ except Exception as e:
                 print("   ✅ tmux sessions created and verified successfully")
             else:
                 raise Exception("tmux sessions not found after creation")
-            
+
             print("   ✅ tmux sessions created/verified")
 
         except Exception as e:
@@ -946,7 +946,7 @@ def main():
         print("   ⚡ エンターを押さないとワーカーに指示が届きません")
         print()
         print("📋 便利なコマンド:")
-        print("```bash") 
+        print("```bash")
         print("make ai-org-status    # 組織状況確認")
         print("make tmux-reset       # 表示がおかしい時のリセット")
         print("```")
