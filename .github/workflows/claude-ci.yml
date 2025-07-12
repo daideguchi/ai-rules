@@ -1,0 +1,178 @@
+name: Claude Code CI/CD
+on:
+  pull_request:
+    types: [opened, synchronize]
+  push:
+    branches: [main]
+
+jobs:
+  claude-type-check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install mypy ruff pytest
+          pip install -r requirements.txt
+      
+      - name: Run mypy and collect errors
+        id: mypy
+        continue-on-error: true
+        run: |
+          mypy src/ --no-implicit-optional --ignore-missing-imports > mypy_errors.log 2>&1 || true
+          echo "MYPY_FAILED=$?" >> $GITHUB_OUTPUT
+      
+      - name: Claude fixes type errors
+        if: steps.mypy.outputs.MYPY_FAILED != '0'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          # API キー確認
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "⚠️ ANTHROPIC_API_KEY not set - skipping Claude type fixes"
+            exit 0
+          fi
+          
+          echo "✅ ANTHROPIC_API_KEY configured"
+          npm install -g @anthropic-ai/claude-code
+          
+          # XMLタグ構造化プロンプト
+          cat > fix_prompt.xml << 'EOF'
+          <instructions>
+          あなたはPython型チェックの専門家です。以下のmypyエラーを修正してください。
+          </instructions>
+          
+          <context>
+          - Python 3.11環境
+          - mypyの--no-implicit-optionalフラグが有効
+          - 型アノテーションを正確に修正
+          </context>
+          
+          <errors>
+          $(cat mypy_errors.log)
+          </errors>
+          
+          <requirements>
+          - Optional[T]を明示的に使用
+          - from typing importを適切に追加
+          - 既存のロジックは変更しない
+          </requirements>
+          EOF
+          
+          # Claude Code 実行（エラーハンドリング付き）
+          if claude -p "$(cat fix_prompt.xml)" --dangerously-skip-permissions; then
+            echo "✅ Claude type fixes completed"
+          else
+            echo "❌ Claude type fixes failed - continuing without fixes"
+          fi
+      
+      - name: Run tests
+        run: |
+          pytest tests/ -v
+      
+      - name: Commit fixes
+        if: steps.mypy.outputs.MYPY_FAILED != '0'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 変更があるかチェック
+          if git diff --quiet && git diff --cached --quiet; then
+            echo "✅ No changes to commit"
+            exit 0
+          fi
+          
+          echo "📝 Committing type fixes..."
+          git config --local user.email "claude-ci@example.com"
+          git config --local user.name "Claude CI"
+          git add -A
+          
+          if git diff --staged --quiet; then
+            echo "✅ No staged changes to commit"
+          else
+            git commit -m "🤖 fix: Auto-fix type errors by Claude CI" || echo "⚠️ Commit failed"
+            git push || echo "⚠️ Push failed"
+          fi
+
+  claude-code-review:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Get changed files
+        id: changed-files
+        run: |
+          echo "files=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -E '\.(py|js|ts)$' | tr '\n' ' ')" >> $GITHUB_OUTPUT
+      
+      - name: Claude reviews code
+        if: steps.changed-files.outputs.files != ''
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # API キー確認
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "⚠️ ANTHROPIC_API_KEY not set - skipping Claude review"
+            echo "# 🤖 Claude Code Review\n\n⚠️ ANTHROPIC_API_KEY not configured in repository secrets.\nClaude review skipped." > review_result.md
+          else
+            echo "✅ ANTHROPIC_API_KEY configured"
+            npm install -g @anthropic-ai/claude-code
+            
+            # レビュー用XMLプロンプト
+            cat > review_prompt.xml << 'EOF'
+          <instructions>
+          以下のファイルをコードレビューしてください。
+          </instructions>
+          
+          <context>
+          - セキュリティ問題を最優先で検出
+          - パフォーマンス問題を指摘
+          - ベストプラクティスに従っているか確認
+          </context>
+          
+          <files>
+          ${{ steps.changed-files.outputs.files }}
+          </files>
+          
+          <output_format>
+          各問題を以下の形式で報告:
+          - 🔴 Critical: セキュリティ/重大バグ
+          - 🟡 Warning: パフォーマンス/潜在的問題
+          - 🟢 Suggestion: 改善提案
+          </output_format>
+          EOF
+            
+            # Claude Code 実行
+            if claude -p "$(cat review_prompt.xml)" > review_result.md 2>&1; then
+              echo "✅ Claude review completed"
+            else
+              echo "❌ Claude review failed"
+              echo "# 🤖 Claude Code Review\n\n❌ Claude review failed. Check logs for details." > review_result.md
+            fi
+          fi
+          
+          # GitHubコメントとして投稿
+          echo "📝 Posting review comment to PR #${{ github.event.pull_request.number }}"
+          if command -v gh >/dev/null 2>&1; then
+            echo "✅ GitHub CLI available"
+            gh pr comment ${{ github.event.pull_request.number }} --body-file review_result.md || {
+              echo "⚠️ Failed to post comment - showing review content:"
+              cat review_result.md
+            }
+          else
+            echo "⚠️ GitHub CLI not available - review content:"
+            cat review_result.md
+          fi

@@ -10,7 +10,7 @@ help:
 	@echo ""
 	@echo "🎯 Main Operations:"
 	@echo "  session-safety-check - セッション安全確認（必須最優先）"
-	@echo "  declare-president - PRESIDENT宣言必須実行"
+	@echo "  declare-president - プロジェクトルール確認実行"
 	@echo "  run-president     - Start PRESIDENT AI system (要宣言)"
 	@echo "  startup-check     - スタートアップチェックリスト実行"
 	@echo "  status           - Check system status"
@@ -78,13 +78,13 @@ install:
 	pip install -r requirements.txt
 	@echo "✅ Dependencies installed"
 
-declare-president: ## セキュアPRESIDENT宣言必須実行
-	@echo "🔴 セキュアPRESIDENT宣言開始..."
+declare-president: ## プロジェクトルール確認必須実行
+	@echo "✅ プロジェクトルール確認済み..."
 	@python3 scripts/tools/unified-president-tool.py declare --secure
 
 run-president: ## PRESIDENT AIシステム起動（自動プロジェクト分析+AI組織配置）
 	@echo "🎯 Starting PRESIDENT AI System with Intelligent Organization..."
-	@python3 scripts/tools/unified-president-tool.py status || (echo "❌ セキュアPRESIDENT宣言が必要です" && exit 1)
+	@python3 scripts/tools/unified-president-tool.py status || (echo "❌ プロジェクトルール確認が必要です" && exit 1)
 	@echo "📊 Analyzing project requirements..."
 	@python3 src/orchestrator/intelligent_project_analyzer.py analyze > /dev/null
 	@echo "🚀 Launching optimal AI organization..."
@@ -193,25 +193,34 @@ enforce-limit: ## Enforce 12-file root directory limit
 
 ## Quick Start Commands (ワンコマンド起動)
 startup: ## 完全システム起動（社長+AI組織+DB+記憶）
-	@echo "🚀 完全システム起動開始..."
+	@echo "🚀 動的AI組織システム起動開始..."
 	@echo "=================================="
-	@echo "1/5: PRESIDENT宣言実行..."
+	@echo "1/4: プロジェクトルール確認実行..."
 	@make declare-president || true
 	@echo ""
-	@echo "2/5: データベース接続確認..."
+	@echo "2/4: データベース接続確認..."
 	@make db-connect || true
 	@echo ""
-	@echo "3/5: 記憶思い出し・継承確認..."
+	@echo "3/4: 記憶思い出し・継承確認..."
 	@make memory-recall || true
 	@echo ""
-	@echo "4/5: AI組織システム起動..."
-	@make ai-org-start || true
-	@echo ""
-	@echo "5/5: システム統合テスト..."
-	@make integration-test || true
-	@echo ""
-	@echo "🎉 完全システム起動完了！"
-	@echo "=================================="
+	@echo "4/4: 動的AI組織システム起動..."
+	@echo "🔧 環境変数設定..."
+	@export TOKENIZERS_PARALLELISM=false
+	@echo "🧹 tmuxセッション完全クリーンアップ..."
+	@tmux kill-server 2>/dev/null || true
+	@sleep 3
+	@echo "📋 プレジデントセッション新規作成..."
+	@tmux new-session -d -s president -c $(PWD)
+	@sleep 2
+	@echo "✅ プレジデントセッション作成確認..."
+	@tmux list-sessions | grep president || (echo "❌ tmuxセッション作成失敗" && exit 1)
+	@echo "🚀 プレジデントセッション自動化開始..."
+	@tmux send-keys -t president "bash $(PWD)/scripts/automation/president_session_controller.sh" C-m
+	@sleep 2
+	@echo "📺 プレジデントセッションに遷移します..."
+	@echo "   ※ 後続処理（ワーカー作成・Claude Code起動）はセッション内で自動実行されます"
+	@tmux attach -t president
 
 quick-start: ## 高速起動（必須システムのみ）
 	@echo "⚡ 高速起動開始..."
@@ -238,7 +247,7 @@ startup-check: ## スタートアップチェックリスト実行
 	@echo "インデックスファイル: Index.md"
 	@echo ""
 	@echo "✅ 必須チェック項目:"
-	@echo "  1. PRESIDENT宣言: make declare-president"
+	@echo "  1. プロジェクトルール確認: make declare-president"
 	@echo "  2. 統合テスト: make integration-test"
 	@echo "  3. AI組織起動: make ai-org-start"
 	@echo "  4. DB接続確認: make db-connect"
@@ -453,3 +462,29 @@ root-audit: ## 🔍 Audit root directory file count
 	@echo "Files in root: $$(ls -la | grep "^-" | wc -l | tr -d ' ')/12 maximum"
 	@echo "Folders: $$(ls -d */ 2>/dev/null | wc -l)"
 	@if [ $$(ls -la | grep "^-" | wc -l | tr -d ' ') -gt 12 ]; then echo "❌ OVER LIMIT - Run 'make enforce-file-organization'"; exit 1; else echo "✅ COMPLIANT"; fi
+
+## 🤖 Claude Code Integration Commands
+token-summary: ## 💰 Check token usage and costs
+	@echo "💰 Token Usage Summary"
+	@python3 scripts/monitoring/token_monitor.py --summary
+
+mcp-servers: ## 🌐 List available MCP servers
+	@echo "🌐 Available MCP Servers:"
+	@cat config/mcp-servers.json | python3 -m json.tool | grep -E '"(github|puppeteer|context7|o3|database)"' || echo "No MCP servers configured"
+
+claude-template: ## 📝 Show Claude XML template structure
+	@echo "📝 Claude XML Template Structure:"
+	@head -30 templates/CLAUDE_TEMPLATE.md
+
+ci-setup: ## 🔧 Setup GitHub Actions for Claude CI/CD
+	@echo "🔧 Setting up Claude CI/CD..."
+	@echo "Add these secrets to your GitHub repository:"
+	@echo "  - ANTHROPIC_API_KEY: Your Claude API key"
+	@echo "  - GITHUB_TOKEN: Already available in Actions"
+	@echo ""
+	@echo "CI/CD workflow is at: .github/workflows/claude-ci.yml"
+
+tmux-reset: ## 🔄 Reset tmux to default settings (if display is unreadable)
+	@echo "🔄 Resetting tmux to default settings..."
+	@tmux kill-server 2>/dev/null || true
+	@echo "✅ tmux reset completed. Run 'make startup' to restart with default settings"

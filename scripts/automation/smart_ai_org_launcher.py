@@ -488,7 +488,29 @@ except Exception as e:
             print("   ⏳ Waiting for Claude Code instances to initialize...")
             time.sleep(8)
 
-            # Step 5: Send initial prompts to president and EXECUTE
+            # Step 5: Apply complete statusbar configuration automatically
+            print("   🎨 Applying complete statusbar configuration...")
+            try:
+                venv_python = self._get_venv_python()
+                statusbar_result = subprocess.run(
+                    [
+                        venv_python,
+                        "src/orchestrator/tmux_statusbar_enforcer.py",
+                        "apply-all"
+                    ],
+                    capture_output=True,
+                    text=True,
+                    cwd=self.project_root,
+                    timeout=10,
+                )
+                if statusbar_result.returncode == 0:
+                    print("   ✅ Statusbar configuration applied automatically")
+                else:
+                    print("   ⚠️ Statusbar configuration failed, using basic setup")
+            except Exception as e:
+                print(f"   ⚠️ Statusbar setup error: {e}")
+
+            # Step 6: Send initial prompts to president and EXECUTE
             print("   📋 Configuring PRESIDENT with project requirements...")
             president_prompt = self._generate_president_prompt()
             subprocess.run(
@@ -498,7 +520,7 @@ except Exception as e:
             subprocess.run(["tmux", "send-keys", "-t", "president", "C-m"], check=True)
             time.sleep(2)
 
-            # Step 6: Send worker initialization prompts and EXECUTE
+            # Step 7: Send worker initialization prompts and EXECUTE
             print("   👥 Configuring WORKERS with role assignments...")
             worker_prompts = self._generate_worker_prompts()
             for i, prompt in enumerate(worker_prompts):
@@ -512,7 +534,7 @@ except Exception as e:
                 time.sleep(1)
 
             print(
-                "   ✅ Complete AI organization with Claude Code and prompts launched"
+                "   ✅ Complete AI organization with Claude Code, statusbar, and role assignments launched"
             )
             return True
 
@@ -692,8 +714,14 @@ except Exception as e:
     def _ensure_tmux_sessions(self):
         """Ensure tmux sessions exist"""
         try:
-            # Create president session if not exists
-            subprocess.run(
+            # Clean up existing sessions first
+            print("   🧹 Cleaning up existing tmux sessions...")
+            subprocess.run(["tmux", "kill-server"], check=False)
+            time.sleep(2)
+
+            # Create president session
+            print("   👑 Creating president session...")
+            result = subprocess.run(
                 [
                     "tmux",
                     "new-session",
@@ -703,10 +731,11 @@ except Exception as e:
                     "-c",
                     str(self.project_root),
                 ],
-                check=False,
-            )  # Don't fail if session exists
+                check=True,
+            )
 
             # Create multiagent session with 4-pane layout
+            print("   👥 Creating multiagent session...")
             subprocess.run(
                 [
                     "tmux",
@@ -717,24 +746,35 @@ except Exception as e:
                     "-c",
                     str(self.project_root),
                 ],
-                check=False,
+                check=True,
             )
 
+            time.sleep(1)
             subprocess.run(
-                ["tmux", "split-window", "-h", "-t", "multiagent"], check=False
+                ["tmux", "split-window", "-h", "-t", "multiagent"], check=True
+            )
+            time.sleep(1)
+            subprocess.run(
+                ["tmux", "split-window", "-v", "-t", "multiagent:0.0"], check=True
+            )
+            time.sleep(1)
+            subprocess.run(
+                ["tmux", "split-window", "-v", "-t", "multiagent:0.2"], check=True
+            )
+            time.sleep(1)
+            subprocess.run(
+                ["tmux", "select-layout", "-t", "multiagent", "tiled"], check=True
             )
 
-            subprocess.run(
-                ["tmux", "split-window", "-v", "-t", "multiagent:0.0"], check=False
+            # Verify sessions were created
+            print("   ✅ Verifying tmux sessions...")
+            result = subprocess.run(
+                ["tmux", "list-sessions"], capture_output=True, text=True, check=True
             )
-
-            subprocess.run(
-                ["tmux", "split-window", "-v", "-t", "multiagent:0.1"], check=False
-            )
-
-            subprocess.run(
-                ["tmux", "select-layout", "-t", "multiagent", "tiled"], check=False
-            )
+            if "president" in result.stdout and "multiagent" in result.stdout:
+                print("   ✅ tmux sessions created and verified successfully")
+            else:
+                raise Exception("tmux sessions not found after creation")
 
             print("   ✅ tmux sessions created/verified")
 
@@ -891,6 +931,26 @@ def main():
             print(f"   {status} {key.replace('_', ' ').title()}")
 
         print()
+        print("✅ 立ち上げ完了！")
+        print("   🚀 4ワーカー + プレジデント + ステータスバー + 役職配置 = 全自動完了")
+        print("   ⚙️ ユーザーの手を介さず、ここまで自動で完了しました")
+        print()
+        print("📺 次のステップ - AI組織画面確認:")
+        print("```bash")
+        print("tmux attach -t president    # プレジデント画面")
+        print("tmux attach -t multiagent   # ワーカー4画面")
+        print("```")
+        print()
+        print("🔴 重要：プレジデント→ワーカー指示時の操作")
+        print("   📝 指示を入力した後、必ずエンターキーを押してください")
+        print("   ⚡ エンターを押さないとワーカーに指示が届きません")
+        print()
+        print("📋 便利なコマンド:")
+        print("```bash")
+        print("make ai-org-status    # 組織状況確認")
+        print("make tmux-reset       # 表示がおかしい時のリセット")
+        print("```")
+        print()
         print("🎮 AI組織アクセス方法:")
         print("   👑 プレジデント画面:    tmux attach-session -t president")
         print("   👥 ワーカー組織画面:    tmux attach-session -t multiagent")
@@ -900,6 +960,7 @@ def main():
         print("   • Ctrl+B, D でセッションから抜ける")
         print("   • Ctrl+B, ←→↑↓ でワーカー切り替え")
         print("   • multiagentは4分割画面（BOSS1, WORKER1-3）")
+        print("   • プレジデント指示時：入力→必ずエンター")
 
         if result.error_log:
             print()

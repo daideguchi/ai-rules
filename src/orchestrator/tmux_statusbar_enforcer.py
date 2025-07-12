@@ -200,14 +200,14 @@ class TmuxStatusBarEnforcer:
                 ["tmux", "set-option", "-t", session_name, "status", "on"],
                 # ペインボーダーステータス設定
                 ["tmux", "set-option", "-t", session_name, "pane-border-status", "top"],
-                # ペインタイトル表示フォーマット（白色テキスト）
+                # ペインタイトル表示フォーマット（薄いグレー背景）
                 [
                     "tmux",
                     "set-option",
                     "-t",
                     session_name,
                     "pane-border-format",
-                    "#{?pane_active,#[bg=colour46#,fg=white],#[bg=colour240#,fg=white]} #{pane_title} #[default]",
+                    "#{?pane_active,#[bg=colour250#,fg=black],#[bg=colour245#,fg=black]} #{pane_title} #[default]",
                 ],
                 # ステータス更新間隔
                 [
@@ -270,23 +270,7 @@ class TmuxStatusBarEnforcer:
                         f"✅ Set title '{pane_config.title}' for pane {pane_target}"
                     )
 
-                # ペイン専用設定（存在する場合）
-                if hasattr(pane_config, "color_scheme") and pane_config.color_scheme:
-                    # ペインボーダー色設定
-                    try:
-                        cmd_color = [
-                            "tmux",
-                            "select-pane",
-                            "-t",
-                            pane_target,
-                            "-P",
-                            f"fg={pane_config.color_scheme}",
-                        ]
-                        subprocess.run(
-                            cmd_color, capture_output=True, text=True, check=False
-                        )
-                    except Exception:
-                        pass  # カラー設定失敗は無視
+                # 色設定は一切行わない（完全デフォルト）
 
             return True
 
@@ -297,17 +281,17 @@ class TmuxStatusBarEnforcer:
     def _apply_status_line_format(
         self, session_name: str, config: StatusBarConfig
     ) -> bool:
-        """ステータスライン形式設定"""
+        """ステータスライン形式設定（デフォルト）"""
         try:
-            # セッション固有のステータスライン
-            status_left = f"#[bg=colour33,fg=colour16,bold] {config.session_name.upper()} #[default]"
+            # デフォルトのステータスライン設定（最小限）
+            status_left = f" {config.session_name.upper()} "
 
             if config.show_session_info:
-                status_left += " #[fg=colour245]#S:#I.#P#[default]"
+                status_left += " #S:#I.#P"
 
             status_right = ""
             if config.show_time:
-                status_right = "#[fg=colour245]%Y-%m-%d #[fg=colour255,bold]%H:%M:%S"
+                status_right = "%Y-%m-%d %H:%M:%S"
 
             commands = [
                 ["tmux", "set-option", "-t", session_name, "status-left", status_left],
@@ -319,14 +303,7 @@ class TmuxStatusBarEnforcer:
                     "status-right",
                     status_right,
                 ],
-                [
-                    "tmux",
-                    "set-option",
-                    "-t",
-                    session_name,
-                    "status-style",
-                    "bg=colour235,fg=colour255",
-                ],
+                # ステータススタイルはデフォルトに戻す（設定しない）
             ]
 
             for cmd in commands:
@@ -341,86 +318,9 @@ class TmuxStatusBarEnforcer:
             return False
 
     def _apply_color_scheme(self, session_name: str, config: StatusBarConfig) -> bool:
-        """カラースキーム適用"""
+        """カラースキーム適用（完全デフォルト）"""
         try:
-            if config.color_theme == "professional":
-                # プロフェッショナルテーマ
-                commands = [
-                    [
-                        "tmux",
-                        "set-option",
-                        "-t",
-                        session_name,
-                        "pane-active-border-style",
-                        "fg=colour46",
-                    ],
-                    [
-                        "tmux",
-                        "set-option",
-                        "-t",
-                        session_name,
-                        "pane-border-style",
-                        "fg=colour240",
-                    ],
-                    [
-                        "tmux",
-                        "set-option",
-                        "-t",
-                        session_name,
-                        "window-status-current-style",
-                        "bg=colour46,fg=colour16,bold",
-                    ],
-                    [
-                        "tmux",
-                        "set-option",
-                        "-t",
-                        session_name,
-                        "window-status-style",
-                        "bg=colour240,fg=colour255",
-                    ],
-                ]
-            elif config.color_theme == "executive":
-                # エグゼクティブテーマ（PRESIDENT用）
-                commands = [
-                    [
-                        "tmux",
-                        "set-option",
-                        "-t",
-                        session_name,
-                        "pane-active-border-style",
-                        "fg=colour220",
-                    ],
-                    [
-                        "tmux",
-                        "set-option",
-                        "-t",
-                        session_name,
-                        "pane-border-style",
-                        "fg=colour240",
-                    ],
-                    [
-                        "tmux",
-                        "set-option",
-                        "-t",
-                        session_name,
-                        "window-status-current-style",
-                        "bg=colour220,fg=colour16,bold",
-                    ],
-                    [
-                        "tmux",
-                        "set-option",
-                        "-t",
-                        session_name,
-                        "window-status-style",
-                        "bg=colour240,fg=colour255",
-                    ],
-                ]
-            else:
-                return True  # デフォルトカラー使用
-
-            for cmd in commands:
-                subprocess.run(cmd, capture_output=True, text=True, check=False)
-
+            # 全て完全デフォルトに設定（何も色設定しない）
             return True
 
         except Exception as e:
