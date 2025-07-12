@@ -7,16 +7,16 @@ AIシステムスペシャリスト専用実装
 """
 
 import functools
-import inspect
 import json
-from dataclasses import asdict, dataclass
-from datetime import datetime
-from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+import os
 
 # 動的AI組織システムのインポート
 import sys
-import os
+from dataclasses import asdict, dataclass
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Callable, Dict, List
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from ai.ai_organization_system import DynamicAIOrganizationSystem, DynamicRole
@@ -47,30 +47,30 @@ class WorkflowConfig:
 
 class AgentWeaverIntegration:
     """AgentWeaver統合システム - コア統合エンジン"""
-    
+
     def __init__(self):
         self.project_root = Path("/Users/dd/Desktop/1_dev/coding-rule2")
         self.integration_state_file = self.project_root / "runtime" / "agentweaver" / "integration_state.json"
         self.integration_state_file.parent.mkdir(parents=True, exist_ok=True)
-        
+
         # システム統合
         self.ai_organization = DynamicAIOrganizationSystem()
         self.memory_system = BreakthroughMemorySystem()
-        
+
         # AgentWeaverエージェント登録簿
         self.registered_agents: Dict[str, Callable] = {}
         self.agent_configs: Dict[str, AgentConfig] = {}
         self.active_workflows: Dict[str, Dict] = {}
-        
+
         # AIシステムスペシャリスト役職を作成
         self._create_ai_specialist_role()
-        
+
         print("🤖 AgentWeaver統合システム初期化完了")
 
     def _create_ai_specialist_role(self):
         """AIシステムスペシャリスト役職の動的作成"""
         from ai.ai_organization_system import RoleCapability
-        
+
         ai_specialist = DynamicRole(
             name="AI_SYSTEMS_SPECIALIST",
             display_name="AIシステムスペシャリスト",
@@ -103,10 +103,10 @@ class AgentWeaverIntegration:
                 "system_integration"
             ]
         )
-        
+
         # 動的AI組織システムに登録
         self.ai_organization.dynamic_roles["AI_SYSTEMS_SPECIALIST"] = ai_specialist
-        
+
         # RoleCapabilityも登録
         self.ai_organization.role_capabilities["AI_SYSTEMS_SPECIALIST"] = RoleCapability(
             role=ai_specialist,
@@ -115,13 +115,13 @@ class AgentWeaverIntegration:
             decision_scope=ai_specialist.decision_scope,
             collaboration_requirements=ai_specialist.collaboration_requirements
         )
-        
+
         # 役職活性化
         activation_result = self.ai_organization.activate_role(
-            "AI_SYSTEMS_SPECIALIST", 
+            "AI_SYSTEMS_SPECIALIST",
             "AgentWeaver統合・記憶継承システム最適化タスク"
         )
-        
+
         print(f"🤖 AIシステムスペシャリスト役職活性化: {activation_result['display_name']}")
 
     def agent(
@@ -134,7 +134,7 @@ class AgentWeaverIntegration:
         specialization: str = "general"
     ):
         """AgentWeaverエージェントデコレータ - 動的AI組織統合版"""
-        
+
         def decorator(func: Callable) -> Callable:
             # エージェント設定作成
             config = AgentConfig(
@@ -145,7 +145,7 @@ class AgentWeaverIntegration:
                 authority_level=authority_level,
                 specialization=specialization
             )
-            
+
             # 動的役職としてAI組織システムに登録
             dynamic_role = DynamicRole(
                 name=f"AGENT_{role.upper()}",
@@ -159,14 +159,14 @@ class AgentWeaverIntegration:
                 specialization=specialization,
                 required_skills=[specialization]
             )
-            
+
             self.ai_organization.dynamic_roles[f"AGENT_{role.upper()}"] = dynamic_role
-            
+
             @functools.wraps(func)
             def wrapper(*args, **kwargs):
                 # 記憶継承システム統合
                 memory_context = self.memory_system.build_memory_prompt(f"Agent {role} execution")
-                
+
                 # AI組織システムでの実行
                 execution_result = self.ai_organization.execute_with_role(
                     f"AGENT_{role.upper()}",
@@ -178,16 +178,16 @@ class AgentWeaverIntegration:
                         "agent_config": asdict(config)
                     }
                 )
-                
+
                 # 実際の関数実行
                 try:
                     result = func(*args, **kwargs)
-                    
+
                     # 実行ログ記録
                     self._log_agent_execution(role, func.__name__, result, execution_result)
-                    
+
                     return result
-                    
+
                 except Exception as e:
                     # エラー処理とログ記録
                     error_log = {
@@ -199,13 +199,13 @@ class AgentWeaverIntegration:
                     }
                     self._log_error(error_log)
                     raise
-            
+
             # エージェント登録
             self.registered_agents[role] = wrapper
             self.agent_configs[role] = config
-            
+
             return wrapper
-            
+
         return decorator
 
     def workflow(
@@ -215,15 +215,15 @@ class AgentWeaverIntegration:
         error_handling: str = "retry_3_times"
     ):
         """AgentWeaverワークフロー - AI組織協調版"""
-        
+
         def workflow_executor(input_data: Any, context: Dict[str, Any] = None):
             workflow_id = f"workflow_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-            
+
             config = WorkflowConfig(
                 mode=mode,
                 error_handling=error_handling
             )
-            
+
             # AIシステムスペシャリストでワークフロー統括
             orchestration_result = self.ai_organization.execute_with_role(
                 "AI_SYSTEMS_SPECIALIST",
@@ -235,9 +235,9 @@ class AgentWeaverIntegration:
                     "context": context or {}
                 }
             )
-            
+
             results = []
-            
+
             if mode == "sequential":
                 # 順次実行
                 current_data = input_data
@@ -250,7 +250,7 @@ class AgentWeaverIntegration:
                             "timestamp": datetime.now().isoformat()
                         })
                         current_data = result  # 次のエージェントに結果を渡す
-                    except Exception as e:
+                    except Exception:
                         if error_handling == "retry_3_times":
                             # リトライ実装
                             for retry in range(3):
@@ -269,7 +269,7 @@ class AgentWeaverIntegration:
                                         raise
                         else:
                             raise
-            
+
             elif mode == "parallel":
                 # 並列実行 (簡易実装)
                 for i, agent_func in enumerate(agents):
@@ -286,7 +286,7 @@ class AgentWeaverIntegration:
                             "error": str(e),
                             "timestamp": datetime.now().isoformat()
                         })
-            
+
             # ワークフロー結果の統合
             workflow_result = {
                 "workflow_id": workflow_id,
@@ -297,17 +297,17 @@ class AgentWeaverIntegration:
                 "orchestration": orchestration_result,
                 "completed_at": datetime.now().isoformat()
             }
-            
+
             # 記憶継承システムに記録
             self.memory_system.ledger_upsert(
                 f"AgentWeaverワークフロー実行: {workflow_id}, 成功率: {workflow_result['successful_executions']}/{workflow_result['total_agents']}",
                 importance=8
             )
-            
+
             self.active_workflows[workflow_id] = workflow_result
-            
+
             return workflow_result
-        
+
         return workflow_executor
 
     def _log_agent_execution(self, role: str, function_name: str, result: Any, execution_context: Dict):
@@ -319,10 +319,10 @@ class AgentWeaverIntegration:
             "execution_context": execution_context,
             "success": True
         }
-        
+
         log_file = self.project_root / "runtime" / "agentweaver" / "execution_logs.jsonl"
         log_file.parent.mkdir(parents=True, exist_ok=True)
-        
+
         with open(log_file, "a", encoding="utf-8") as f:
             f.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
 
@@ -330,7 +330,7 @@ class AgentWeaverIntegration:
         """エラーログ記録"""
         error_file = self.project_root / "runtime" / "agentweaver" / "error_logs.jsonl"
         error_file.parent.mkdir(parents=True, exist_ok=True)
-        
+
         with open(error_file, "a", encoding="utf-8") as f:
             f.write(json.dumps(error_log, ensure_ascii=False) + "\n")
 
@@ -382,7 +382,7 @@ def get_integration_status():
 
 if __name__ == "__main__":
     print("🤖 AgentWeaver統合システム - テスト実行")
-    
+
     # テストエージェント定義
     @agent(
         role="researcher",
@@ -393,7 +393,7 @@ if __name__ == "__main__":
     )
     def research_agent(query: str) -> str:
         return f"研究結果: {query}についての詳細分析"
-    
+
     @agent(
         role="writer",
         model="claude-sonnet-4",
@@ -403,20 +403,21 @@ if __name__ == "__main__":
     )
     def writer_agent(research_data: str) -> str:
         return f"記事作成: {research_data}に基づく包括的レポート"
-    
+
     # ワークフロー作成とテスト実行
     research_workflow = workflow([research_agent, writer_agent], mode="sequential")
-    
+
     result = research_workflow("AgentWeaver統合システムの評価")
-    
+
     print(f"ワークフロー実行結果: {result['workflow_id']}")
     print(f"成功率: {result['successful_executions']}/{result['total_agents']}")
-    
+
     # 統合状況確認
     status = get_integration_status()
-    print(f"\n統合システム状況:")
+    print("\n統合システム状況:")
     print(f"  AI組織役職数: {status['ai_organization_roles']}")
     print(f"  登録エージェント数: {status['registered_agents']}")
     print(f"  AIシステムスペシャリスト: {'✅' if status['ai_specialist_active'] else '❌'}")
-    
+
     print("\n🤖 AgentWeaver統合システム テスト完了")
+
