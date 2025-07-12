@@ -495,7 +495,7 @@ except Exception as e:
                 statusbar_result = subprocess.run(
                     [
                         venv_python,
-                        "src/orchestrator/tmux_statusbar_enforcer.py", 
+                        "src/orchestrator/tmux_statusbar_enforcer.py",
                         "apply-all"
                     ],
                     capture_output=True,
@@ -714,8 +714,14 @@ except Exception as e:
     def _ensure_tmux_sessions(self):
         """Ensure tmux sessions exist"""
         try:
-            # Create president session if not exists
-            subprocess.run(
+            # Clean up existing sessions first
+            print("   🧹 Cleaning up existing tmux sessions...")
+            subprocess.run(["tmux", "kill-server"], check=False)
+            time.sleep(2)
+
+            # Create president session
+            print("   👑 Creating president session...")
+            result = subprocess.run(
                 [
                     "tmux",
                     "new-session",
@@ -725,10 +731,11 @@ except Exception as e:
                     "-c",
                     str(self.project_root),
                 ],
-                check=False,
-            )  # Don't fail if session exists
+                check=True,
+            )
 
             # Create multiagent session with 4-pane layout
+            print("   👥 Creating multiagent session...")
             subprocess.run(
                 [
                     "tmux",
@@ -739,24 +746,35 @@ except Exception as e:
                     "-c",
                     str(self.project_root),
                 ],
-                check=False,
+                check=True,
             )
 
+            time.sleep(1)
             subprocess.run(
-                ["tmux", "split-window", "-h", "-t", "multiagent"], check=False
+                ["tmux", "split-window", "-h", "-t", "multiagent"], check=True
+            )
+            time.sleep(1)
+            subprocess.run(
+                ["tmux", "split-window", "-v", "-t", "multiagent:0.0"], check=True
+            )
+            time.sleep(1)
+            subprocess.run(
+                ["tmux", "split-window", "-v", "-t", "multiagent:0.2"], check=True
+            )
+            time.sleep(1)
+            subprocess.run(
+                ["tmux", "select-layout", "-t", "multiagent", "tiled"], check=True
             )
 
-            subprocess.run(
-                ["tmux", "split-window", "-v", "-t", "multiagent:0.0"], check=False
+            # Verify sessions were created
+            print("   ✅ Verifying tmux sessions...")
+            result = subprocess.run(
+                ["tmux", "list-sessions"], capture_output=True, text=True, check=True
             )
-
-            subprocess.run(
-                ["tmux", "split-window", "-v", "-t", "multiagent:0.1"], check=False
-            )
-
-            subprocess.run(
-                ["tmux", "select-layout", "-t", "multiagent", "tiled"], check=False
-            )
+            if "president" in result.stdout and "multiagent" in result.stdout:
+                print("   ✅ tmux sessions created and verified successfully")
+            else:
+                raise Exception("tmux sessions not found after creation")
 
             print("   ✅ tmux sessions created/verified")
 
@@ -928,7 +946,7 @@ def main():
         print("   ⚡ エンターを押さないとワーカーに指示が届きません")
         print()
         print("📋 便利なコマンド:")
-        print("```bash") 
+        print("```bash")
         print("make ai-org-status    # 組織状況確認")
         print("make tmux-reset       # 表示がおかしい時のリセット")
         print("```")

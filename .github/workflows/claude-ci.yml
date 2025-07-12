@@ -8,6 +8,8 @@ on:
 jobs:
   claude-type-check:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       
@@ -33,6 +35,13 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
+          # API キー確認
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "⚠️ ANTHROPIC_API_KEY not set - skipping Claude type fixes"
+            exit 0
+          fi
+          
+          echo "✅ ANTHROPIC_API_KEY configured"
           npm install -g @anthropic-ai/claude-code
           
           # XMLタグ構造化プロンプト
@@ -58,7 +67,12 @@ jobs:
           </requirements>
           EOF
           
-          claude -p "$(cat fix_prompt.xml)" --dangerously-skip-permissions
+          # Claude Code 実行（エラーハンドリング付き）
+          if claude -p "$(cat fix_prompt.xml)" --dangerously-skip-permissions; then
+            echo "✅ Claude type fixes completed"
+          else
+            echo "❌ Claude type fixes failed - continuing without fixes"
+          fi
       
       - name: Run tests
         run: |
@@ -66,16 +80,33 @@ jobs:
       
       - name: Commit fixes
         if: steps.mypy.outputs.MYPY_FAILED != '0'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # 変更があるかチェック
+          if git diff --quiet && git diff --cached --quiet; then
+            echo "✅ No changes to commit"
+            exit 0
+          fi
+          
+          echo "📝 Committing type fixes..."
           git config --local user.email "claude-ci@example.com"
           git config --local user.name "Claude CI"
           git add -A
-          git diff --staged --quiet || git commit -m "🤖 fix: Auto-fix type errors by Claude CI"
-          git push
+          
+          if git diff --staged --quiet; then
+            echo "✅ No staged changes to commit"
+          else
+            git commit -m "🤖 fix: Auto-fix type errors by Claude CI" || echo "⚠️ Commit failed"
+            git push || echo "⚠️ Push failed"
+          fi
 
   claude-code-review:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -90,11 +121,18 @@ jobs:
         if: steps.changed-files.outputs.files != ''
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          npm install -g @anthropic-ai/claude-code
-          
-          # レビュー用XMLプロンプト
-          cat > review_prompt.xml << 'EOF'
+          # API キー確認
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "⚠️ ANTHROPIC_API_KEY not set - skipping Claude review"
+            echo "# 🤖 Claude Code Review\n\n⚠️ ANTHROPIC_API_KEY not configured in repository secrets.\nClaude review skipped." > review_result.md
+          else
+            echo "✅ ANTHROPIC_API_KEY configured"
+            npm install -g @anthropic-ai/claude-code
+            
+            # レビュー用XMLプロンプト
+            cat > review_prompt.xml << 'EOF'
           <instructions>
           以下のファイルをコードレビューしてください。
           </instructions>
@@ -116,8 +154,25 @@ jobs:
           - 🟢 Suggestion: 改善提案
           </output_format>
           EOF
-          
-          claude -p "$(cat review_prompt.xml)" > review_result.md
+            
+            # Claude Code 実行
+            if claude -p "$(cat review_prompt.xml)" > review_result.md 2>&1; then
+              echo "✅ Claude review completed"
+            else
+              echo "❌ Claude review failed"
+              echo "# 🤖 Claude Code Review\n\n❌ Claude review failed. Check logs for details." > review_result.md
+            fi
+          fi
           
           # GitHubコメントとして投稿
-          gh pr comment ${{ github.event.pull_request.number }} --body-file review_result.md
+          echo "📝 Posting review comment to PR #${{ github.event.pull_request.number }}"
+          if command -v gh >/dev/null 2>&1; then
+            echo "✅ GitHub CLI available"
+            gh pr comment ${{ github.event.pull_request.number }} --body-file review_result.md || {
+              echo "⚠️ Failed to post comment - showing review content:"
+              cat review_result.md
+            }
+          else
+            echo "⚠️ GitHub CLI not available - review content:"
+            cat review_result.md
+          fi
