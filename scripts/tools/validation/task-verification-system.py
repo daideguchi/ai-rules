@@ -9,8 +9,10 @@ Phase 6 統合完了 - レガシー互換性のためのwrapperスクリプト
   scripts/tools/unified-validation-tool.py task-verify "<task>" [--context "<context>"]
 """
 
+import json
 import os
 import sys
+from datetime import datetime
 from pathlib import Path
 
 print("⚠️  [LEGACY] task-verification-system.py は統合されました")

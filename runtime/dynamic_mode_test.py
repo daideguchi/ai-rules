@@ -8,8 +8,8 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-# Import after path setup  # noqa: E402
-from src.enforcement.dynamic_mode_switcher import DynamicModeSwitcher
+# Import after path setup
+from src.enforcement.dynamic_mode_switcher import DynamicModeSwitcher  # noqa: E402
 
 
 def test_dynamic_switching():
