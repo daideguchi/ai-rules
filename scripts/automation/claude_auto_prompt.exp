@@ -1,0 +1,28 @@
+#!/usr/bin/expect -f
+
+# Claude Code自動プロンプト送信スクリプト
+set timeout 30
+set role [lindex $argv 0]
+set prompt [lindex $argv 1]
+
+# Claude Code起動
+spawn claude --dangerously-skip-permissions
+
+# Claude Code起動待機
+expect {
+    ">" {
+        # プロンプト送信
+        send "$prompt\r"
+        expect ">" {
+            # 完了確認
+            send "\r"
+        }
+    }
+    timeout {
+        puts "Claude Code起動タイムアウト"
+        exit 1
+    }
+}
+
+# 対話モード継続
+interact

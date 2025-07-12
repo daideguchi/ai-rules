@@ -10,7 +10,7 @@ help:
 	@echo ""
 	@echo "🎯 Main Operations:"
 	@echo "  session-safety-check - セッション安全確認（必須最優先）"
-	@echo "  declare-president - PRESIDENT宣言必須実行"
+	@echo "  declare-president - プロジェクトルール確認実行"
 	@echo "  run-president     - Start PRESIDENT AI system (要宣言)"
 	@echo "  startup-check     - スタートアップチェックリスト実行"
 	@echo "  status           - Check system status"
@@ -78,13 +78,13 @@ install:
 	pip install -r requirements.txt
 	@echo "✅ Dependencies installed"
 
-declare-president: ## セキュアPRESIDENT宣言必須実行
-	@echo "🔴 セキュアPRESIDENT宣言開始..."
+declare-president: ## プロジェクトルール確認必須実行
+	@echo "✅ プロジェクトルール確認済み..."
 	@python3 scripts/tools/unified-president-tool.py declare --secure
 
 run-president: ## PRESIDENT AIシステム起動（自動プロジェクト分析+AI組織配置）
 	@echo "🎯 Starting PRESIDENT AI System with Intelligent Organization..."
-	@python3 scripts/tools/unified-president-tool.py status || (echo "❌ セキュアPRESIDENT宣言が必要です" && exit 1)
+	@python3 scripts/tools/unified-president-tool.py status || (echo "❌ プロジェクトルール確認が必要です" && exit 1)
 	@echo "📊 Analyzing project requirements..."
 	@python3 src/orchestrator/intelligent_project_analyzer.py analyze > /dev/null
 	@echo "🚀 Launching optimal AI organization..."
@@ -193,126 +193,34 @@ enforce-limit: ## Enforce 12-file root directory limit
 
 ## Quick Start Commands (ワンコマンド起動)
 startup: ## 完全システム起動（社長+AI組織+DB+記憶）
-	@echo "🚀 完全システム起動開始..."
+	@echo "🚀 動的AI組織システム起動開始..."
 	@echo "=================================="
-	@echo "1/5: PRESIDENT宣言実行..."
+	@echo "1/4: プロジェクトルール確認実行..."
 	@make declare-president || true
 	@echo ""
-	@echo "2/5: データベース接続確認..."
+	@echo "2/4: データベース接続確認..."
 	@make db-connect || true
 	@echo ""
-	@echo "3/5: 記憶思い出し・継承確認..."
+	@echo "3/4: 記憶思い出し・継承確認..."
 	@make memory-recall || true
 	@echo ""
-	@echo "4/5: AI組織システム起動..."
-	@make ai-org-start || echo "⚠️ AI組織システム起動でエラーが発生しましたが、手動でClaude Code設定を続行します"
-	@echo "📋 プレジデントセッション確保..."
-	@tmux new-session -d -s president -c $(PWD) 2>/dev/null || echo "プレジデントセッション既に存在"
-	@echo "🚀 プレジデントにClaude Code起動..."
-	@echo "   Claude Codeパス確認..."
-	@which claude || echo "❌ claude command not found in PATH"
-	@echo "   Claude Code認証状態確認..."
-	@claude auth whoami 2>/dev/null && echo "✅ Claude Code認証済み" || echo "⚠️ Claude Code未認証 - 手動認証が必要です" || true
-	@tmux send-keys -t president "which claude" C-m
-	@sleep 2
-	@echo "   Claude Code起動中（認証が必要な場合は自動でブラウザが起動します）"
-	@tmux send-keys -t president "claude --dangerously-skip-permissions" C-m
-	@sleep 8
-	@echo "🔐 認証バイパス確認..."
-	@tmux send-keys -t president C-m
-	@sleep 2
-	@echo "📋 プロンプトセット中..."
-	@tmux send-keys -t president "あなたはプレジデントです。BOSS1、WORKER1、WORKER2、WORKER3の4人に役職を配布し、プロジェクト要件に基づいたタスクを指示してください。各ワーカーのtmuxペインに移動して指示を送信してください。" C-m
-	@sleep 2
-	@echo "⚡ プロンプト実行確認..."
-	@tmux send-keys -t president C-m
-	@sleep 1
-	@echo "👥 ワーカーセッション作成..."
-	@tmux kill-session -t multiagent 2>/dev/null || true
-	@tmux new-session -d -s multiagent -c $(PWD)
-	@sleep 1
-	@tmux split-window -h -t multiagent
-	@sleep 1
-	@tmux split-window -v -t multiagent:0.0
-	@sleep 1  
-	@tmux split-window -v -t multiagent:0.2
-	@sleep 1
-	@tmux select-layout -t multiagent tiled
-	@echo "🎭 ワーカー役職配置中..."
-	@tmux select-pane -t multiagent:0.0 -T "👔 BOSS1" 2>/dev/null || true
-	@tmux select-pane -t multiagent:0.1 -T "💻 WORKER1" 2>/dev/null || true
-	@tmux select-pane -t multiagent:0.2 -T "🔧 WORKER2" 2>/dev/null || true
-	@tmux select-pane -t multiagent:0.3 -T "🎨 WORKER3" 2>/dev/null || true
-	@sleep 1
-	@echo "🚀 ワーカーにClaude Code起動..."
-	@echo "   Claude Code認証状態再確認..."
-	@claude auth whoami 2>/dev/null && echo "✅ ワーカー用Claude Code認証OK" || echo "⚠️ ワーカーでもClaude Code認証が必要です" || true
-	@echo "   各ワーカーにClaude Codeパス確認..."
-	@tmux send-keys -t multiagent:0.0 "which claude || echo 'Claude not found'" C-m
-	@tmux send-keys -t multiagent:0.1 "which claude || echo 'Claude not found'" C-m
-	@tmux send-keys -t multiagent:0.2 "which claude || echo 'Claude not found'" C-m
-	@tmux send-keys -t multiagent:0.3 "which claude || echo 'Claude not found'" C-m
+	@echo "4/4: 動的AI組織システム起動..."
+	@echo "🔧 環境変数設定..."
+	@export TOKENIZERS_PARALLELISM=false
+	@echo "🧹 tmuxセッション完全クリーンアップ..."
+	@tmux kill-server 2>/dev/null || true
 	@sleep 3
-	@echo "   BOSS1起動中..."
-	@tmux send-keys -t multiagent:0.0 "claude --dangerously-skip-permissions" C-m
-	@sleep 3
-	@echo "   WORKER1起動中..."
-	@tmux send-keys -t multiagent:0.1 "claude --dangerously-skip-permissions" C-m
-	@sleep 3
-	@echo "   WORKER2起動中..."
-	@tmux send-keys -t multiagent:0.2 "claude --dangerously-skip-permissions" C-m
-	@sleep 3
-	@echo "   WORKER3起動中..."
-	@tmux send-keys -t multiagent:0.3 "claude --dangerously-skip-permissions" C-m
-	@sleep 5
-	@echo "🔐 ワーカー認証バイパス確認..."
-	@tmux send-keys -t multiagent:0.0 C-m
-	@sleep 1
-	@tmux send-keys -t multiagent:0.1 C-m
-	@sleep 1
-	@tmux send-keys -t multiagent:0.2 C-m
-	@sleep 1
-	@tmux send-keys -t multiagent:0.3 C-m
-	@sleep 3
-	@echo "📋 ワーカー役職プロンプトセット..."
-	@echo "   BOSS1プロンプト設定..."
-	@tmux send-keys -t multiagent:0.0 "あなたはBOSS1です。プレジデントからの指示を待ち、ワーカーたちの統括管理を行ってください。" C-m
+	@echo "📋 プレジデントセッション新規作成..."
+	@tmux new-session -d -s president -c $(PWD)
 	@sleep 2
-	@echo "   WORKER1プロンプト設定..."
-	@tmux send-keys -t multiagent:0.1 "あなたはWORKER1です。開発・実装タスクを担当します。プレジデントとBOSS1からの指示に従ってください。" C-m
+	@echo "✅ プレジデントセッション作成確認..."
+	@tmux list-sessions | grep president || (echo "❌ tmuxセッション作成失敗" && exit 1)
+	@echo "🚀 プレジデントセッション自動化開始..."
+	@tmux send-keys -t president "bash $(PWD)/scripts/automation/president_session_controller.sh" C-m
 	@sleep 2
-	@echo "   WORKER2プロンプト設定..."
-	@tmux send-keys -t multiagent:0.2 "あなたはWORKER2です。テスト・品質管理を担当します。プレジデントとBOSS1からの指示に従ってください。" C-m
-	@sleep 2
-	@echo "   WORKER3プロンプト設定..."
-	@tmux send-keys -t multiagent:0.3 "あなたはWORKER3です。ドキュメント・設計を担当します。プレジデントとBOSS1からの指示に従ってください。" C-m
-	@sleep 3
-	@echo "⚡ ワーカープロンプト実行確認..."
-	@tmux send-keys -t multiagent:0.0 C-m
-	@sleep 1
-	@tmux send-keys -t multiagent:0.1 C-m
-	@sleep 1
-	@tmux send-keys -t multiagent:0.2 C-m
-	@sleep 1
-	@tmux send-keys -t multiagent:0.3 C-m
-	@sleep 2
-	@echo "🎨 ステータスバー設定適用..."
-	@make statusbar-enforce 2>/dev/null || true
-	@echo ""
-	@echo "5/5: システム統合テスト..."
-	@make integration-test || true
-	@echo ""
-	@echo "🎉 完全システム起動完了！"
-	@echo "=================================="
-	@echo "✅ Claude Code起動 + プロンプトセット + エンター処理 + 役職配置 = 完全自動完了"
-	@echo "👑 プレジデント: 起動済み・プロンプト設定済み・エンター処理済み"
-	@echo "👥 4ワーカー: 全員起動済み・役職配置済み・エンター処理済み"
-	@echo "🎨 ステータスバー: 配置完了"
-	@echo ""
-	@echo "📺 プレジデント画面に切り替えます..."
-	@echo "💡 Claude Code認証が必要な場合は自動でブラウザが起動します"
-	@echo "   認証完了後、プレジデントがワーカーに指示を開始します"
-	@tmux attach -t president || echo "❌ プレジデントセッションが見つかりません。手動で 'tmux attach -t president' を実行してください。"
+	@echo "📺 プレジデントセッションに遷移します..."
+	@echo "   ※ 後続処理（ワーカー作成・Claude Code起動）はセッション内で自動実行されます"
+	@tmux attach -t president
 
 quick-start: ## 高速起動（必須システムのみ）
 	@echo "⚡ 高速起動開始..."
@@ -339,7 +247,7 @@ startup-check: ## スタートアップチェックリスト実行
 	@echo "インデックスファイル: Index.md"
 	@echo ""
 	@echo "✅ 必須チェック項目:"
-	@echo "  1. PRESIDENT宣言: make declare-president"
+	@echo "  1. プロジェクトルール確認: make declare-president"
 	@echo "  2. 統合テスト: make integration-test"
 	@echo "  3. AI組織起動: make ai-org-start"
 	@echo "  4. DB接続確認: make db-connect"
